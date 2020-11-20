@@ -22,8 +22,19 @@
  *  Buttons UP, RIGHT, DOWN, LEFT, PAUSE and RESTART are each assigned on characters '8', '6', '2', '4', 'x', 'z' in the both case of SerialPort and WiFi UDP.
  */
 
+#define M5STACK
+//#define M5STACK_SD_UPDATER
+//#define GAME_AUDIO
+
+#ifdef M5STACK
 #include <M5Stack.h>
+#endif
+
+#ifdef M5STACK_SD_UPDATER
 #include "M5StackUpdater.h"
+#endif
+
+#ifdef GAME_AUDIO
 #include "Game_Audio.h"
 #include "SoundData.h"
 
@@ -33,11 +44,13 @@ Game_Audio_Wav_Class pmDeath(pacmanDeath); // pacman dyingsound
 Game_Audio_Wav_Class pmWav(pacman); // pacman theme
 Game_Audio_Wav_Class pmChomp(chomp); // pacman chomp
 Game_Audio_Wav_Class pmEatGhost(pacman_eatghost); // pacman theme
+#endif
 
+#ifdef M5STACK_SD_UPDATER
 SDUpdater sdUpdater;
+#endif
 
-
-byte SPEED = 2; // 1=SLOW 2=NORMAL 4=FAST //do not try  other values!!!
+byte SPEED = 1; // 1=SLOW 2=NORMAL 4=FAST //do not try  other values!!!
 
 /******************************************************************************/
 /*   MAIN GAME VARIABLES                                                      */
@@ -974,9 +987,11 @@ class Playfield
     void PackmanDied() {  // Noooo... PACMAN DIED :(
 
       if(DEMO == 0) {
+#ifdef GAME_AUDIO
         GameAudio.PlayWav(&pmDeath, true, 1.0);
         // wait until done
         while(GameAudio.IsPlaying());
+#endif
       }
 
       if (LIFES <= 0) {
@@ -1166,7 +1181,9 @@ class Playfield
           if (s->state == FrightenedState)
           {
             if (DEMO == 0) {
+#ifdef GAME_AUDIO
               GameAudio.PlayWav(&pmEatGhost, true, 1.0);
+#endif
             }
             
             s->state = DeadNumberState;     // Killed a ghost
@@ -1259,7 +1276,9 @@ class Playfield
       byte mask = 0x80 >> (cx & 7);
       _dotMap[(cy - 3) * 4 + (cx >> 3)] &= ~mask;
       if(DEMO == 0) {
+#ifdef GAME_AUDIO
         GameAudio.PlayWav(&pmChomp, false, 1.0);
+#endif
       }
 
       byte t = GetTile(cx, cy);
@@ -1368,9 +1387,11 @@ class Playfield
       if (but_A && DEMO == 1 && GAMEPAUSED == 0) {
         but_A = false;
         DEMO = 0;
+#ifdef GAME_AUDIO
         GameAudio.PlayWav(&pmWav, false, 1.0);
         // wait until done
         //while(GameAudio.IsPlaying()){ }
+#endif
         Init();
       } else if (but_A && DEMO == 0 && GAMEPAUSED == 0) { // Or PAUSE GAME
         but_A = false;
@@ -1421,11 +1442,13 @@ void setup() {
   Serial.begin(115200);  
   M5.begin();
   Wire.begin();
+#ifdef M5STACK_SD_UPDATER
   if(digitalRead(BUTTON_A_PIN) == 0) {
     Serial.println("Will Load menu binary");
     sdUpdater.updateFromFS(SD);
     ESP.restart();
   }
+#endif
   M5.Lcd.setRotation(2);
   M5.Lcd.fillScreen(TFT_BLACK);
   pinMode(5, INPUT_PULLUP);
