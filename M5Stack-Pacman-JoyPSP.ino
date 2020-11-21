@@ -26,6 +26,10 @@
 //#define M5STACK_SD_UPDATER
 //#define GAME_AUDIO
 
+// Run M5AtomJoyStick on M5AtomMatrix as a joy stick
+// @see https://github.com/katsuyoshi/M5AtomJoyStick
+#define JOY_M5ATOM
+
 #ifdef M5STACK
 #include <M5Stack.h>
 #endif
@@ -48,6 +52,10 @@ Game_Audio_Wav_Class pmEatGhost(pacman_eatghost); // pacman theme
 
 #ifdef M5STACK_SD_UPDATER
 SDUpdater sdUpdater;
+#endif
+
+#ifdef JOY_M5ATOM
+#include "JoyM5Atom.h"
 #endif
 
 byte SPEED = 1; // 1=SLOW 2=NORMAL 4=FAST //do not try  other values!!!
@@ -1435,7 +1443,11 @@ class Playfield
 #define JOY_X 35
 #define JOY_Y 36
 
+#ifdef JOY_M5ATOM
+JoyM5Atom joyM5Atom;
+#else
 bool joyPadDetected = false;
+#endif
 
 void setup() {
   randomSeed(analogRead(0));
@@ -1453,6 +1465,10 @@ void setup() {
   M5.Lcd.fillScreen(TFT_BLACK);
   pinMode(5, INPUT_PULLUP);
   
+#ifdef JOY_M5ATOM
+  joyM5Atom = JoyM5Atom();
+  joyM5Atom.begin();
+#else
   pinMode(JOY_X, INPUT);
   pinMode(JOY_Y, INPUT);
   
@@ -1474,6 +1490,7 @@ void setup() {
   } else {
     joyPadDetected = true;
   }
+#endif
   delay(100);
 }
 
@@ -1509,6 +1526,14 @@ void KeyPadLoop(){
   }
   // if(digitalRead(BUTTON_C_PIN) == 0) ?
 
+  #ifdef JOY_M5ATOM
+    joyM5Atom.update();
+    ClearKeys();
+    but_DOWN  = joyM5Atom.is_down();
+    but_UP    = joyM5Atom.is_up();
+    but_LEFT  = joyM5Atom.is_left();
+    but_RIGHT = joyM5Atom.is_right();
+  #else
   if(joyPadDetected) {
     uint16_t joyX = analogRead(JOY_X);
     uint16_t joyY = analogRead(JOY_Y);
@@ -1537,6 +1562,7 @@ void KeyPadLoop(){
     if (r == '4') { ClearKeys(); but_LEFT=true; }   //else but_LEFT=false;
     if (r == '6') { ClearKeys(); but_RIGHT=true; }  //else but_RIGHT=false;
   }
+#endif
 }
 
 
